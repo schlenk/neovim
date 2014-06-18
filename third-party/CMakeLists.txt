@@ -103,21 +103,41 @@ if(USE_BUNDLED_LIBUV)
 endif()
 
 if(USE_BUNDLED_MSGPACK)
-  ExternalProject_Add(msgpack
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${MSGPACK_URL}
-    URL_MD5 ${MSGPACK_MD5}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
-      -DURL=${MSGPACK_URL}
-      -DEXPECTED_MD5=${MSGPACK_MD5}
-      -DTARGET=msgpack
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/msgpack/configure --disable-shared
-       --with-pic --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+  if (WIN32)
+    ExternalProject_Add(msgpack
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${MSGPACK_URL}
+      URL_MD5 ${MSGPACK_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+        -DPREFIX=${DEPS_BUILD_DIR}
+        -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
+        -DURL=${MSGPACK_URL}
+        -DEXPECTED_MD5=${MSGPACK_MD5}
+        -DTARGET=msgpack
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      CONFIGURE_COMMAND vcupgrade "${DEPS_BUILD_DIR}/src/msgpack/msgpack_vc2008.vcproj" 
+      BUILD_COMMAND msbuild  "${DEPS_BUILD_DIR}/src/msgpack/msgpack_vc2008.vcxproj"  /p:Configuration=Release
+      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DEPS_BUILD_DIR}/src/msgpack/lib/msgpack.lib" "${DEPS_LIB_DIR}/msgpack.lib"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${DEPS_BUILD_DIR}/src/msgpack/include" "${DEPS_INCLUDE_DIR}/msgpack"
+      )
+  else()
+    ExternalProject_Add(msgpack
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${MSGPACK_URL}
+      URL_MD5 ${MSGPACK_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+        -DPREFIX=${DEPS_BUILD_DIR}
+        -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
+        -DURL=${MSGPACK_URL}
+        -DEXPECTED_MD5=${MSGPACK_MD5}
+        -DTARGET=msgpack
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/msgpack/configure --disable-shared
+         --with-pic --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
+      INSTALL_COMMAND ${MAKE_PRG} install)
+  endif()
   list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()
 
