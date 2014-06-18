@@ -142,25 +142,44 @@ if(USE_BUNDLED_MSGPACK)
 endif()
 
 if(USE_BUNDLED_LUAJIT)
-  ExternalProject_Add(luajit
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LUAJIT_URL}
-    URL_MD5 ${LUAJIT_MD5}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
-      -DURL=${LUAJIT_URL}
-      -DEXPECTED_MD5=${LUAJIT_MD5}
-      -DTARGET=luajit
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                BUILDMODE=static
-                                install)
+  if (WIN32)
+    ExternalProject_Add(luajit
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${LUAJIT_URL}
+      URL_MD5 ${LUAJIT_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+        -DPREFIX=${DEPS_BUILD_DIR}
+        -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
+        -DURL=${LUAJIT_URL}
+        -DEXPECTED_MD5=${LUAJIT_MD5}
+        -DTARGET=luajit
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      CONFIGURE_COMMAND ""
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND cd "${DEPS_BUILD_DIR}/src/luajit/src" COMMAND cmd /c "${DEPS_BUILD_DIR}/src/luajit/src/msvcbuild.bat" static
+      INSTALL_COMMAND "")
+  else()
+   ExternalProject_Add(luajit
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${LUAJIT_URL}
+      URL_MD5 ${LUAJIT_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+        -DPREFIX=${DEPS_BUILD_DIR}
+        -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
+        -DURL=${LUAJIT_URL}
+        -DEXPECTED_MD5=${LUAJIT_MD5}
+        -DTARGET=luajit
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      CONFIGURE_COMMAND ""
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND ""
+      INSTALL_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
+                                  PREFIX=${DEPS_INSTALL_DIR}
+                                  BUILDMODE=static
+                                  install)
+  endif()
   list(APPEND THIRD_PARTY_DEPS luajit)
 endif()
 
