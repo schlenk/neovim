@@ -72,3 +72,4 @@ local.mk
 /third-party/Debug/
 /CMakeFiles/
 CMakeCache.txt
+third-party/NEOVIM_DEPS.opensdf
