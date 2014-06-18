@@ -10,6 +10,7 @@ endif()
 set(DEPS_INSTALL_DIR "${DEPS_DIR}/usr")
 set(DEPS_BIN_DIR "${DEPS_DIR}/usr/bin")
 set(DEPS_LIB_DIR "${DEPS_DIR}/usr/lib")
+set(DEPS_INCLUDE_DIR "${DEPS_DIR}/usr/include")
 set(DEPS_BUILD_DIR "${DEPS_DIR}/build")
 set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 
@@ -21,26 +22,29 @@ option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 
 # TODO: add windows support
-
-find_program(MAKE_PRG NAMES gmake make)
-if(MAKE_PRG)
-  execute_process(
-    COMMAND "${MAKE_PRG}" --version
-    OUTPUT_VARIABLE MAKE_VERSION_INFO)
-  if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
-    unset(MAKE_PRG)
+if (WIN32)
+  # nothing to do here
+else()	
+  find_program(MAKE_PRG NAMES gmake make)
+  if(MAKE_PRG)
+    execute_process(
+      COMMAND "${MAKE_PRG}" --version
+      OUTPUT_VARIABLE MAKE_VERSION_INFO)
+    if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
+      unset(MAKE_PRG)
+    endif()
   endif()
-endif()
-if(NOT MAKE_PRG)
-  message(FATAL_ERROR "GNU Make is required to build the dependencies.")
-else()
-  message(STATUS "Found GNU Make at ${MAKE_PRG}")
-endif()
+  if(NOT MAKE_PRG)
+    message(FATAL_ERROR "GNU Make is required to build the dependencies.")
+  else()
+    message(STATUS "Found GNU Make at ${MAKE_PRG}")
+  endif()
 
-# When using make, use the $(MAKE) variable to avoid warning about the job
-# server.
-if(CMAKE_GENERATOR MATCHES "Makefiles")
-  set(MAKE_PRG "$(MAKE)")
+  # When using make, use the $(MAKE) variable to avoid warning about the job
+  # server.
+  if(CMAKE_GENERATOR MATCHES "Makefiles")
+    set(MAKE_PRG "$(MAKE)")
+  endif()
 endif()
 
 
@@ -59,22 +63,42 @@ set(LUAROCKS_URL http://github.com/keplerproject/luarocks/archive/v2.1.2.tar.gz)
 set(LUAROCKS_MD5 df591c00a85d51fb754ec08c77896aad)
 
 if(USE_BUNDLED_LIBUV)
-  ExternalProject_Add(libuv
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LIBUV_URL}
-    URL_MD5 ${LIBUV_MD5}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
-      -DURL=${LIBUV_URL}
-      -DEXPECTED_MD5=${LIBUV_MD5}
-      -DTARGET=libuv
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
-      ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
-        --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+  if (WIN32)
+    ExternalProject_Add(libuv
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${LIBUV_URL}
+      URL_MD5 ${LIBUV_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+	-DPREFIX=${DEPS_BUILD_DIR}
+	-DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
+	-DURL=${LIBUV_URL}
+	-DEXPECTED_MD5=${LIBUV_MD5}
+	-DTARGET=libuv
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND cmd /c ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat release static
+      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DEPS_BUILD_DIR}/src/libuv/Release/lib/libuv.lib" "${DEPS_LIB_DIR}/libuv.lib"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${DEPS_BUILD_DIR}/src/libuv/include" "${DEPS_INCLUDE_DIR}/uv"
+      )
+  else()
+    ExternalProject_Add(libuv
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${LIBUV_URL}
+      URL_MD5 ${LIBUV_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+	-DPREFIX=${DEPS_BUILD_DIR}
+	-DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
+	-DURL=${LIBUV_URL}
+	-DEXPECTED_MD5=${LIBUV_MD5}
+	-DTARGET=libuv
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
+	${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
+	  --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
+      INSTALL_COMMAND ${MAKE_PRG} install)
+  endif()
   list(APPEND THIRD_PARTY_DEPS libuv)
 endif()
 
