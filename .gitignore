@@ -56,3 +56,19 @@ local.mk
 
 # Doxygen output
 /documentation/
+
+# CMake and Visual Studio Stuff
+/third-party/CMakeCache.txt
+/third-party/cmake.check_cache
+/third-party/cmake_install.cmake
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+/third-party/NEOVIM_DEPS.sdf
+/third-party/NEOVIM_DEPS.suo
+/third-party/NEOVIM_DEPS.sln
+/third-party/CMakeFiles/
+/third-party/Win32/
+/third-party/Debug/
+/CMakeFiles/
+CMakeCache.txt
